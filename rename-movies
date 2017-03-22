@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+# Title: rename-movies
+# Description: Batch rename on series movie
+# Author: William Chanrico
+# Date: 3-Jan-2017
+
+__version__ = "1.1.0"
+
+import sys, re, argparse
+from os import rename, listdir, path
+
+def header():
+	print(" _____________________ 	")
+	print("/ hello, who's there? \\	")
+	print("\\ william said hi...  /	")
+	print(" ---------------------	")
+	print("       \\   ,__,			")
+	print("        \\  (..)____		")
+	print("           (__)    )\	")
+	print("              ||--|| *	")
+	print("Rename movies in this directory\n")
+
+#tests = ('Series Name s01e01.avi', 'Series Name 1x01.avi', '01 Episode Title.avi')
+def getEpisodeNumber(filename):
+	match = re.search(r'''(?ix)(?:e|x|^)\s*(\d{1,2})''', filename)
+	if match:
+		return match.group(1).zfill(2)
+	return False
+
+def getSeasonNumber(filename):
+	match1 = re.search(r'''(?ix)(?:s|season)(\d{1,2})''', filename)
+	match2 = re.search(r'''(?ix)(?: )(\d{1,2})x''', filename)
+	if match1:
+		return match1.group(1).zfill(2)
+	elif match2:
+		return match2.group(1).zfill(2)
+	return False
+
+def main(args):
+	movieName = args.NAME
+	renamedMovieCount = 0
+	renamedMovieName = []
+	foundFiles = listdir('.')
+	foundFilesCount = len(foundFiles)
+	
+	header()
+
+	for filename in foundFiles:
+		extension = path.splitext(filename)[1]
+		episodeNumber = getEpisodeNumber(filename)
+		seasonNumber = getSeasonNumber(filename)
+
+		if extension == '':
+			continue
+		elif not episodeNumber:
+			continue
+		elif not seasonNumber:
+			newName = movieName + ' - Episode ' + episodeNumber + extension
+		else:
+			newName = movieName + ' S' + seasonNumber + 'E' + episodeNumber + extension
+
+		rename(filename, newName)
+
+		renamedMovieCount += 1
+		
+		if args.verbose:
+			renamedMovieName.append(newName)
+
+	if args.verbose:
+		renamedMovieName.sort()
+		print('Modified:')
+		print('\n'.join(renamedMovieName))
+
+	print("Renamed {} out of {} file(s)\n".format(renamedMovieCount, foundFilesCount))
+
+	print("Done\n")
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="Script to do a batch rename on series movie")
+
+	parser.add_argument("NAME", help="movie's name")
+	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+	parser.add_argument("--version", action="version", version="%(prog)s " + __version__, help="output version information and exit")
+	
+	parser.parse_args()
+
+	args = parser.parse_args()
+
+	main(args)
