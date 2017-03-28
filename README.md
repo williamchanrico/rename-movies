@@ -1,8 +1,7 @@
 # rename-movies
 Python script to do a batch rename on series movie
 
-![Screenshot](screenshot.png?raw=true "Screenshot")
-
+## Usage
 ```
 $ rename-movies -h    
 usage: rename-movies [-h] [-v] [--version] NAME
@@ -16,4 +15,7 @@ optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  increase output verbosity
   --version      output version information and exit
-  ```
+```
+
+## Preview
+![Screenshot](screenshot.png?raw=true "Screenshot")
