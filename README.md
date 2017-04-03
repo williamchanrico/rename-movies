@@ -19,3 +19,5 @@ optional arguments:
 
 ## Preview
 ![Screenshot](screenshot.png?raw=true "Screenshot")
+
+![Demo](demo.gif?raw=true "Demo")
