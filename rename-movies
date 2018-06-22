@@ -5,7 +5,7 @@
 # Author: William Chanrico
 # Date: 3-Jan-2017
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 import sys, re, argparse
 from os import rename, listdir, path
@@ -22,13 +22,13 @@ def header():
 	print("Rename movies in this directory\n")
 
 #tests = ('Series Name s01e01.avi', 'Series Name 1x01.avi', '01 Episode Title.avi')
-def getEpisodeNumber(filename):
+def get_episode_number(filename):
 	match = re.search(r'''(?ix)(?:e|x|^)\s*(\d{1,2})''', filename)
 	if match:
 		return match.group(1).zfill(2)
 	return False
 
-def getSeasonNumber(filename):
+def get_season_number(filename):
 	match1 = re.search(r'''(?ix)(?:s|season)(\d{1,2})''', filename)
 	match2 = re.search(r'''(?ix)(?: )(\d{1,2})x''', filename)
 	if match1:
@@ -37,43 +37,53 @@ def getSeasonNumber(filename):
 		return match2.group(1).zfill(2)
 	return False
 
+def no_duplicates(rename_list):
+	new_names = set(new for old, new in rename_list)
+
+	return (len(rename_list) == len(new_names))
+
 def main(args):
-	movieName = args.NAME
-	renamedMovieCount = 0
-	renamedMovieName = []
-	foundFiles = listdir('.')
-	foundFilesCount = len(foundFiles)
+	movie_name = args.NAME
+	rename_list = []
+	found_files = listdir('.')
+	found_files_count = len(found_files)
 	
 	header()
 
-	for filename in foundFiles:
+	for filename in found_files:
 		extension = path.splitext(filename)[1]
-		episodeNumber = getEpisodeNumber(filename)
-		seasonNumber = getSeasonNumber(filename)
+		episode_num = get_episode_number(filename)
+		season_num = get_season_number(filename)
 
 		if extension == '':
 			continue
-		elif not episodeNumber:
+		elif not episode_num:
 			continue
-		elif not seasonNumber:
-			newName = movieName + ' - Episode ' + episodeNumber + extension
+		elif not season_num:
+			new_name = movie_name + ' - Episode ' + episode_num + extension
 		else:
-			newName = movieName + ' S' + seasonNumber + 'E' + episodeNumber + extension
+			new_name = movie_name + ' S' + season_num + 'E' + episode_num + extension
 
-		rename(filename, newName)
+		rename_list.append((filename, new_name))
 
-		renamedMovieCount += 1
-		
-		if args.verbose:
-			renamedMovieName.append(newName)
+	if not no_duplicates(rename_list):
+		print("Failed to determine the correct filenames\n")
+		sys.exit(1)
+
+	rename_list.sort()
+	
+	if args.dry:
+		print("DRY RUN! No files will be modified\n")
+		args.verbose = True
+	else:
+		for old, new in rename_list:
+			rename(old, new)
 
 	if args.verbose:
-		renamedMovieName.sort()
-		print('Modified:')
-		print('\n'.join(renamedMovieName))
+		for old, new in rename_list:
+			print(new)
 
-	print("Renamed {} out of {} file(s)\n".format(renamedMovieCount, foundFilesCount))
-
+	print("Renamed {} out of {} file(s)".format(len(rename_list), found_files_count))
 	print("Done\n")
 
 if __name__ == "__main__":
@@ -81,8 +91,8 @@ if __name__ == "__main__":
 
 	parser.add_argument("NAME", help="movie's name")
 	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+	parser.add_argument("-d", "--dry", help="dry run or fake run, implies '--verbose'", action="store_true")
 	parser.add_argument("--version", action="version", version="%(prog)s " + __version__, help="output version information and exit")
-	
 	parser.parse_args()
 
 	args = parser.parse_args()
