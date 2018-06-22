@@ -14,6 +14,7 @@ positional arguments:
 optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  increase output verbosity
+  -d, --dry      dry run or fake run, implies '--verbose'
   --version      output version information and exit
 ```
 
