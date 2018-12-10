@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+""" Batch rename movie series """
 
 # Title: rename-movies
 # Description: Batch rename on series movie
@@ -7,94 +8,121 @@
 
 __version__ = "1.2.0"
 
-import sys, re, argparse
+import sys
+import re
+import argparse
 from os import rename, listdir, path
 
-def header():
-	print(" _____________________ 	")
-	print("/ hello, who's there? \\	")
-	print("\\ william said hi...  /	")
-	print(" ---------------------	")
-	print("       \\   ,__,			")
-	print("        \\  (..)____		")
-	print("           (__)    )\	")
-	print("              ||--|| *	")
-	print("Rename movies in this directory\n")
 
-#tests = ('Series Name s01e01.avi', 'Series Name 1x01.avi', '01 Episode Title.avi')
+def header():
+    """ Prints header """
+    print(" _____________________ 	")
+    print("/ hello, who's there? \\	")
+    print("\\ william said hi...  /	")
+    print(" ---------------------	")
+    print("       \\   ,__,			")
+    print("        \\  (..)____		")
+    print("           (__)    )\	")
+    print("              ||--|| *	")
+    print("Rename movies in this directory\n")
+
+
+# e.g. 'Series Name s01e01.avi', 'Series Name 1x01.avi', '01 Episode Title.avi'
 def get_episode_number(filename):
-	match = re.search(r'''(?ix)(?:e|x|^)\s*(\d{1,2})''', filename)
-	if match:
-		return match.group(1).zfill(2)
-	return False
+    """ Returns detected episode number """
+    match = re.search(r'''(?ix)(?:e|x|^)\s*(\d{1,2})''', filename)
+    if match:
+        return match.group(1).zfill(2)
+    return False
+
 
 def get_season_number(filename):
-	match1 = re.search(r'''(?ix)(?:s|season)(\d{1,2})''', filename)
-	match2 = re.search(r'''(?ix)(?: )(\d{1,2})x''', filename)
-	if match1:
-		return match1.group(1).zfill(2)
-	elif match2:
-		return match2.group(1).zfill(2)
-	return False
+    """ Returns detected season number """
+    match1 = re.search(r'''(?ix)(?:s|season)(\d{1,2})''', filename)
+    match2 = re.search(r'''(?ix)(?: )(\d{1,2})x''', filename)
+    if match1:
+        return match1.group(1).zfill(2)
+    if match2:
+        return match2.group(1).zfill(2)
+    return False
+
 
 def no_duplicates(rename_list):
-	new_names = set(new for old, new in rename_list)
+    """ Returns True if there are no duplicates """
+    new_names = set(new for old, new in rename_list)
 
-	return (len(rename_list) == len(new_names))
+    return len(rename_list) == len(new_names)
+
 
 def main(args):
-	movie_name = args.NAME
-	rename_list = []
-	found_files = listdir('.')
-	found_files_count = len(found_files)
-	
-	header()
+    """ Main entry point """
+    movie_name = args.NAME
+    rename_list = []
+    found_files = listdir('.')
+    found_files_count = len(found_files)
 
-	for filename in found_files:
-		extension = path.splitext(filename)[1]
-		episode_num = get_episode_number(filename)
-		season_num = get_season_number(filename)
+    header()
 
-		if extension == '':
-			continue
-		elif not episode_num:
-			continue
-		elif not season_num:
-			new_name = movie_name + ' - Episode ' + episode_num + extension
-		else:
-			new_name = movie_name + ' S' + season_num + 'E' + episode_num + extension
+    for filename in found_files:
+        ext = path.splitext(filename)[1]
+        episode_num = get_episode_number(filename)
+        season_num = get_season_number(filename)
 
-		rename_list.append((filename, new_name))
+        if ext == '':
+            continue
+        elif not episode_num:
+            continue
+        elif not season_num:
+            new_name = movie_name + ' - Episode ' + episode_num + ext
+        else:
+            new_name = movie_name + ' S' + season_num + 'E' + episode_num + ext
 
-	if not no_duplicates(rename_list):
-		print("Failed to determine the correct filenames\n")
-		sys.exit(1)
+        rename_list.append((filename, new_name))
 
-	rename_list.sort()
-	
-	if args.dry:
-		print("DRY RUN! No files will be modified\n")
-		args.verbose = True
-	else:
-		for old, new in rename_list:
-			rename(old, new)
+    if not no_duplicates(rename_list):
+        print("Failed to determine the correct filenames\n")
+        sys.exit(1)
 
-	if args.verbose:
-		for old, new in rename_list:
-			print(new)
+    rename_list.sort()
 
-	print("Renamed {} out of {} file(s)".format(len(rename_list), found_files_count))
-	print("Done\n")
+    if args.dry:
+        print("DRY RUN! No files will be modified\n")
+        args.verbose = True
+    else:
+        for old, new in rename_list:
+            rename(old, new)
+
+    if args.verbose:
+        for old, new in rename_list:
+            print(new)
+
+    print("Renamed {} out of {} file(s)".format(
+        len(rename_list), found_files_count))
+    print("Done\n")
+
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description="Script to do a batch rename on series movie")
+    PARSER = argparse.ArgumentParser(
+        description="Script to do a batch rename on series movie")
 
-	parser.add_argument("NAME", help="movie's name")
-	parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
-	parser.add_argument("-d", "--dry", help="dry run or fake run, implies '--verbose'", action="store_true")
-	parser.add_argument("--version", action="version", version="%(prog)s " + __version__, help="output version information and exit")
-	parser.parse_args()
+    PARSER.add_argument("NAME", help="movie's name")
 
-	args = parser.parse_args()
+    PARSER.add_argument(
+        "-v",
+        "--verbose",
+        help="increase output verbosity",
+        action="store_true")
 
-	main(args)
+    PARSER.add_argument(
+        "-d",
+        "--dry",
+        help="dry run or fake run, implies '--verbose'",
+        action="store_true")
+    PARSER.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s " + __version__,
+        help="output version information and exit")
+
+    ARGS = PARSER.parse_args()
+    main(ARGS)
