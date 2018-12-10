@@ -118,6 +118,7 @@ if __name__ == "__main__":
         "--dry",
         help="dry run or fake run, implies '--verbose'",
         action="store_true")
+
     PARSER.add_argument(
         "--version",
         action="version",
